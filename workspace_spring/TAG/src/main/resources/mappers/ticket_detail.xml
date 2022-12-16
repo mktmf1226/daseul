@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--  ticketDetail  -->
+
+<mapper namespace="ticketDetail">
+
+
+<!-- 티켓결제 티켓 주문상세내역서 insert -->
+<insert id="addDetail2" parameterType="java.util.List">
+	INSERT INTO TICKET_DETAIL (tck_num, cseat ,price)
+	VALUES 
+			<foreach collection="list" item="item" separator=",">
+			(
+			  #{item.tck_num}
+			 ,#{item.cseat}
+			 ,#{item.price}
+			)
+			</foreach>
+</insert>
+
+
+
+<!-- 티켓결제 티켓 주문상세내역서 insert 한 행씩 넣기-->
+<!-- 
+<insert id="addDetail" parameterType="kr.co.itwill.tickets.TicketDetailDTO">
+	INSERT INTO TICKET_DETAIL (tck_num, cseat ,price)
+	VALUES 
+			(
+			  #{tck_num}
+			 ,#{cseat}
+			 ,#{price}
+			)
+</insert>
+-->
+
+
+
+
+
+
+
+
+</mapper>

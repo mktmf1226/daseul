@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+     
+<mapper namespace="sellerProduct">
+	
+	<insert id="insert" parameterType="kr.co.itwill.memberSeller.SellerProductDTO">
+    	INSERT INTO product(category, c_no, p_id, pro_name, stock, color, size, price, edit, regdate, postername)
+		VALUES (#{category}, #{c_no}, #{p_id}, #{pro_name}, #{stock}, #{color}, #{size}, #{price}, #{edit}, (current_date), #{postername})
+	</insert>
+	
+	<select id="concertlist" resultType="kr.co.itwill.concert.ConcertDTO">
+		SELECT  c_no, title, date
+		FROM	concert
+		ORDER BY date
+	</select>
+
+	<select id="productlist" resultType="kr.co.itwill.memberSeller.SellerProductDTO" parameterType="java.util.Map"> 
+		<![CDATA[
+		SELECT AA.*
+		FROM(
+		    SELECT @RNO := @RNO + 1 as r, CC.*
+		    FROM (
+		        SELECT p.pro_no,pro_name, p.p_id, stock, color, size, price, regdate, edit, category, status, postername, likecnt, count(o.pro_no) AS sales, (stock-(count(o.pro_no))) AS afstock
+		        FROM product P LEFT JOIN order_detail O
+		                       ON P.pro_no = O.pro_no
+		        GROUP BY p.pro_no
+		        HAVING p.p_id = #{p_id}
+		        ORDER BY p.pro_no DESC
+		    ) CC, (SELECT @RNO := 0) BB 
+		) AA 
+		WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select>
+
+	<select id="totpro_cnt" resultType="int">
+	SELECT COUNT(pro_no) AS totpro_cnt
+	FROM product 
+	WHERE p_id = #{p_id}
+	</select>
+
+
+	<delete id="chkdelete" parameterType="kr.co.itwill.memberSeller.SellerProductDTO">
+		DELETE FROM product
+		WHERE pro_no IN  ( 
+							<foreach collection="chkList" item="value" separator=",">
+								#{value}
+							</foreach>
+						  )
+	</delete>
+	
+	<update id="productstatusup" parameterType="kr.co.itwill.memberSeller.SellerProductDTO">
+		UPDATE product 
+		SET status = #{status}
+		WHERE pro_no = #{pro_no}
+	</update>
+	
+	<select id="productread" resultType="kr.co.itwill.memberSeller.SellerProductDTO" parameterType="int">
+		SELECT *
+		FROM product
+		WHERE pro_no = #{pro_no}
+	</select>
+	
+	<update id="productupdate" parameterType="kr.co.itwill.memberSeller.SellerProductDTO">
+		UPDATE product
+		SET  pro_name = #{pro_name}
+			,postername = #{postername}
+			,price = #{price}
+			,edit = #{edit}
+			,category = #{category}
+			,color = #{color}
+			,size = #{size}
+			,stock = #{stock}
+		WHERE pro_no = #{pro_no}
+	</update>
+	
+	<delete id="productdelete" parameterType="int">
+		DELETE FROM product
+		WHERE pro_no = #{pro_no}
+	</delete>
+	
+	<select id="posternameread" resultType="String">
+		SELECT postername
+		FROM product
+		WHERE pro_no = #{pro_no}
+	</select><!-- 파일 이름 조회 -->
+	
+	<select id="orderlist" resultType="kr.co.itwill.productOrder.ProdcutOrderDTO" parameterType="java.util.Map">
+		<![CDATA[
+			SELECT AA.*
+			FROM(
+			    SELECT @RNO := @RNO + 1 as r, CC.*
+			    FROM (
+			            select order_num, sum(detail_cnt) as total_cnt, sum(total_price) as total_price, m_id, rec_name, rec_addr, rec_tel, substr(order_num,1,8) as order_date
+			            from (
+			                    select od.order_num, detail_cnt, od.total_price, m_id, rec_name, rec_addr, rec_tel, msg
+			                    from order_detail od join product p on od.pro_no = p.pro_no 
+			                                        join product_order po on od.order_num = po.order_num
+			                    where p_id = #{p_id}
+			            )aa
+			            group by order_num
+			    ) CC, (SELECT @RNO := 0) BB 
+			ORDER BY order_num DESC
+			) AA 
+			WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select>
+	
+	<select id="totord_cnt" resultType="int" parameterType="String">
+		SELECT count(order_num) AS totord_cnt
+		FROM (
+		        SELECT po.order_num, p_id
+		        FROM product_order po join order_detail od on po.order_num = od.order_num
+		                              join product p on od.pro_no = p.pro_no
+		        WHERE p_id = #{p_id} 
+		        GROUP BY po.order_num
+		)AA
+	</select>
+	
+	<select id="orderdetailList" resultType="java.util.Map" parameterType="java.util.Map"> 
+		SELECT od.order_num, detail_no, stus, postername, pro_name, color, size, p.price, detail_cnt
+		FROM order_detail od JOIN product_order pd ON od.order_num = pd.order_num 
+		                     JOIN product p ON od.pro_no = p.pro_no 
+		                     left outer JOIN member m ON pd.m_id = m.m_id
+		                     left outer JOIN coupon_detail cpd ON cpd.cp_no = pd.cp_no 
+		WHERE od.order_num = #{order_num} AND p_id = #{p_id}
+	</select>
+	
+	<select id="orderdetail"  resultType="java.util.Map" parameterType="java.util.Map">	
+		SELECT AA.*, (org_price - discount - pt_minus + d_fee) as total_price
+		FROM (
+		    SELECT od.order_num as order_num, sum(org_price) as org_price, sum(discount) as discount, coupon, pt_minus, d_fee, m.m_id as m_id, m_email, m_tel, rec_name, rec_tel, rec_addr, msg, substr(od.order_num,1,8) as order_date
+		    FROM order_detail od join            product_order pd  on od.order_num = pd.order_num 
+		                         left outer join member m          on pd.m_id      = m.m_id
+		                         left outer join coupon_detail cpd on cpd.cp_no    = pd.cp_no 
+		                         join            product p         on od.pro_no    = p.pro_no
+		    WHERE od.order_num = #{order_num} AND p_id = #{p_id}
+		)AA
+	</select>
+	
+	<update id="orderstusupdate">
+		UPDATE order_detail
+		SET stus = #{stus}
+		WHERE detail_no = #{detail_no}
+	</update>
+	
+	<update id="orderdetailupdate" parameterType="kr.co.itwill.productOrder.ProdcutOrderDTO">
+		UPDATE product_order
+		SET  rec_name = #{rec_name}
+			,rec_addr = #{rec_addr}
+			,rec_tel  = #{rec_tel}
+		WHERE order_num = #{order_num}
+	</update>
+	
+	<select id="S_proSearch" resultType="kr.co.itwill.memberSeller.SellerProductDTO" parameterType="java.util.Map">
+		<![CDATA[
+			SELECT AA.*
+			FROM(
+			    SELECT @RNO := @RNO + 1 as r, CC.*
+			    FROM (
+			        select *
+			        from (
+			                SELECT p.pro_no,pro_name, p.p_id, stock, color, size, price, regdate, edit, category, status, postername, likecnt, count(o.pro_no) AS sales, (stock-(count(o.pro_no))) AS afstock
+			                FROM product P LEFT JOIN order_detail O
+			                               ON P.pro_no = O.pro_no
+			                GROUP BY p.pro_no
+			                HAVING p.p_id = #{p_id}
+			                ORDER BY p.pro_no DESC
+			        )aa
+			        where UPPER(pro_name) LIKE  #{pro_name}
+			    ) CC, (SELECT @RNO := 0) BB 
+			) AA 
+			WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select>
+	
+	<select id="S_ordSearch" resultType="kr.co.itwill.productOrder.ProdcutOrderDTO" parameterType="java.util.Map">
+		<![CDATA[
+			SELECT AA.*
+			FROM(
+			    SELECT @RNO := @RNO + 1 as r, CC.*
+			    FROM (
+			        select *
+			        from (
+ 						select order_num, sum(detail_cnt) as total_cnt, sum(total_price) as total_price, m_id, rec_name, rec_addr, rec_tel, substr(order_num,1,8) as order_date
+			            from (
+			                    select od.order_num, detail_cnt, od.total_price, m_id, rec_name, rec_addr, rec_tel, msg
+			                    from order_detail od join product p on od.pro_no = p.pro_no 
+			                                        join product_order po on od.order_num = po.order_num
+			                    where p_id = #{p_id}
+			            )aa
+			            group by order_num
+			           	ORDER BY order_num DESC
+			        )bb
+			        where order_num LIKE  #{order_num}
+			    ) CC, (SELECT @RNO := 0) BB 
+			) AA 
+			WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select>
+	
+</mapper>

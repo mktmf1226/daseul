@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--  memberSeller  -->
+
+<mapper namespace="memberSeller">
+
+<!-- [로그인] 로그인 성공/실패 -->
+<select id="select"  resultType="String" parameterType="kr.co.itwill.memberSeller.MemberSellerDTO" >
+	SELECT mem_grade
+	FROM seller
+	WHERE p_id = #{p_id} AND p_pw = #{p_pw} AND mem_grade IN ('B', 'S')
+</select>
+
+
+<!-- [로그인] 아이디 중복 체크 -->
+<select id="idCheckS" parameterType="String" resultType="int">
+	SELECT COUNT(p_id) 
+	FROM seller 
+	WHERE p_id= #{p_id}
+</select>
+
+
+<!-- [회원가입] 이메일 중복 체크 -->
+<select id="emailScheck" parameterType="String" resultType="int">
+	SELECT COUNT(com_email) 
+	FROM seller 
+	WHERE com_email= #{com_email}
+</select>
+
+
+<!-- [회원가입] 회원등록 insert -->
+<insert id="joinS" parameterType="kr.co.itwill.memberSeller.MemberSellerDTO">
+	INSERT INTO seller (p_id, p_pw, company, director, licence, com_zipcode, com_addr1, com_addr2, com_tel, com_email, bank, bank_num, regdate)
+	VALUES (
+			 #{p_id}
+			 ,#{p_pw}
+			 ,#{company}
+			 ,#{director}
+			 ,#{licence}
+			 ,#{com_zipcode}
+			 ,#{com_addr1}
+			 ,#{com_addr2}
+			 ,#{com_tel}
+			 ,#{com_email}
+			 ,#{bank}
+			 ,#{bank_num}
+			 ,(current_date)
+			)
+</insert>
+
+<select id="qnalist" resultType="kr.co.itwill.QnA.QnADTO" parameterType="java.util.Map"> 
+	<![CDATA[
+	SELECT AA.*
+		FROM(
+		    SELECT @RNO := @RNO + 1 as r, CC.*
+		    FROM (
+		        SELECT q.q_no, qname, nickname, subject, q.pro_no, postername, pro_name, q.edit, q.regdate, a_no , p.p_id, a_stus
+                FROM qna q JOIN product p ON q.pro_no = p.pro_no
+                           JOIN member m ON q.qname = m.m_id
+                           left outer JOIN answer a ON a.q_no = q.q_no
+                           JOIN seller s ON p.p_id = s.p_id
+                WHERE a_stus = 'N' AND p.p_id = #{p_id}
+                ORDER BY q_no ASC 
+		    ) CC, (SELECT @RNO := 0) BB 
+		 ORDER BY q_no ASC 
+		) AA 
+		WHERE r >= #{start} AND r <= #{end}
+	]]>
+</select>
+
+
+<insert id="answerInsert" parameterType="kr.co.itwill.Answer.AnswerDTO">
+	INSERT INTO answer (q_no, p_id, content, regdate)
+	VALUES (#{q_no},#{p_id},#{content},(CURRENT_TIMESTAMP)) 
+</insert>
+
+<select id="answerOne" resultType="String">
+	SELECT content FROM answer WHERE a_no = #{a_no}
+</select>
+
+<update id="a_stusUpdate">
+	UPDATE qna
+	SET a_stus = 'Y'
+	WHERE q_no = #{q_no}
+</update>
+
+<select id="answerlist" resultType="kr.co.itwill.QnA.QnADTO" parameterType="java.util.Map"> 
+	<![CDATA[
+	SELECT AA.*
+		FROM(
+		    SELECT @RNO := @RNO + 1 as r, CC.*
+		    FROM (
+		        SELECT q.q_no, qname, nickname, subject, q.pro_no, postername, pro_name, q.edit, q.regdate, a_no , p.p_id, a_stus,a.regdate as answerdate
+                FROM qna q JOIN product p ON q.pro_no = p.pro_no
+                           JOIN member m ON q.qname = m.m_id
+                           left outer JOIN answer a ON a.q_no = q.q_no
+                           JOIN seller s ON p.p_id = s.p_id
+                WHERE a_stus = 'Y' AND p.p_id = #{p_id}
+                ORDER BY q_no ASC 
+		    ) CC, (SELECT @RNO := 0) BB 
+		 ORDER BY q_no DESC 
+		) AA 
+		WHERE r >= #{start} AND r <= #{end}
+	]]>
+	
+</select>
+
+<update id="answerupdate" parameterType="kr.co.itwill.Answer.AnswerDTO">
+	UPDATE answer
+	SET content = #{content}
+	WHERE a_no = #{a_no}
+</update>
+
+<select id="totorder_cnt" resultType="int" parameterType="String">	
+	SELECT COUNT(distinct po.order_num) AS totorder_cnt
+    FROM product_order po JOIN order_detail od
+                          ON po.order_num = od.order_num
+                          JOIN product p
+                          ON od.pro_no = p.pro_no
+    WHERE p_id = #{p_id}
+</select>
+
+<select id="delCom_cnt" resultType="int" parameterType="String">
+	SELECT COUNT(IFNULL(aa.delCom_cnt,0)) AS delCom_cnt
+	FROM (
+            SELECT COUNT(order_num) AS delCom_cnt
+            FROM order_detail o join product p 
+                                on o.pro_no = p.pro_no
+            WHERE stus = '배송완료'
+            GROUP BY p_id
+            HAVING p_id = #{p_id}
+    )aa
+</select>
+
+<select id="qnaN_cnt" resultType="int" parameterType="String">
+		SELECT count(q_no) AS qnaN_cnt
+		FROM qna q join product p on q.pro_no = p.pro_no join seller s on s.p_id = p.p_id
+		WHERE a_stus = 'N' AND p.p_id = #{p_id}
+</select>
+
+<select id="qnaY_cnt" resultType="int" parameterType="String">
+		SELECT count(q_no) AS qnaY_cnt
+		FROM qna q join product p on q.pro_no = p.pro_no join seller s on s.p_id = p.p_id
+		WHERE a_stus = 'Y' AND p.p_id = #{p_id}
+</select>
+
+<select id="recently_order" resultType="java.util.Map" parameterType="String">
+	SELECT *
+	FROM (
+	    SELECT @ROWNUM := @ROWNUM + 1 as rnum,  order_num, m_id, rec_addr, rec_tel, total_price, p_id, total_cnt, order_date
+	    FROM (
+	            select po.order_num as order_num, m_id, rec_addr, rec_tel, po.total_price as total_price, p.p_id as p_id, sum(detail_cnt) as total_cnt, substr(po.order_num,1,8) as order_date
+	            from product_order po join order_detail od on po.order_num = od.order_num
+	                                  join product p on od.pro_no = p.pro_no
+	                                  join seller s on p.p_id = s.p_id
+	            where p.p_id = #{p_id}
+	            group by order_num
+	            order by order_num DESC
+	    )AA, (SELECT @ROWNUM :=0) A
+	    ) RESULT
+	WHERE rnum between 1 and 2
+</select>
+
+<select id="recently_qna" resultType="java.util.Map" parameterType="String">
+	SELECT *
+	FROM (
+	    SELECT @ROWNUM := @ROWNUM + 1 as rnum,  q_no, p_id, subject, qname, a_stus, regdate, pro_no
+	    FROM (
+	            SELECT q_no, p.p_id as p_id, subject, qname, a_stus, q.regdate as regdate,  q.pro_no as pro_no
+	            FROM qna q join product p on q.pro_no = p.pro_no join seller s on s.p_id = p.p_id
+	            WHERE p.p_id = #{p_id}      
+	    )AA, (SELECT @ROWNUM :=0) A
+	    ORDER BY q_no DESC
+	    ) RESULT
+	WHERE rnum between 1 and 2
+</select>
+
+</mapper>

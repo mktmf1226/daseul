@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--  memberGeneral  -->
+
+<mapper namespace="memberGeneral">
+
+
+<!-- [로그인] 로그인 성공/실패 -->
+<select id="select"  resultType="String" parameterType="kr.co.itwill.memberGeneral.MemberGeneralDTO" >
+	SELECT mem_grade
+	FROM member
+	WHERE m_id = #{m_id} AND m_pw = #{m_pw} AND mem_grade IN ('B', 'S')
+</select>
+
+
+<!-- [회원가입] 아이디 중복 체크 -->
+<select id="idCheck" parameterType="String" resultType="int">
+	SELECT COUNT(m_id) 
+	FROM member 
+	WHERE m_id= #{m_id}
+</select>
+
+
+<!-- [회원가입] 이메일 중복 체크 -->
+<select id="emailGcheck" parameterType="String" resultType="int">
+	SELECT COUNT(m_email) 
+	FROM member 
+	WHERE m_email= #{m_email}
+</select>
+
+
+<!-- [회원가입] 회원등록 insert -->
+<insert id="joinG" parameterType="kr.co.itwill.memberGeneral.MemberGeneralDTO">
+	INSERT INTO member (m_id, m_pw, m_name, nickname, birth, gender, m_zipcode, m_addr1, m_addr2, m_tel, m_email, mem_grade, point, regdate)
+	VALUES (
+			 #{m_id}
+			 ,#{m_pw}
+			 ,#{m_name}
+			 ,#{nickname}
+			 ,#{birth}
+			 ,#{gender}
+			 ,#{m_zipcode}
+			 ,#{m_addr1}
+			 ,#{m_addr2}
+			 ,#{m_tel}
+			 ,#{m_email}
+			 ,'B'
+			 ,'0'
+			 ,(current_date)
+			)
+</insert>
+
+
+
+
+</mapper>

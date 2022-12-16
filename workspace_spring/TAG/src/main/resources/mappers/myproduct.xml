@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="myproduct">
+
+	<select id="list" resultType="kr.co.itwill.myproduct.MyproductDTO">
+		SELECT order_num, m_id, order_price, cp_dis, cp_no, pt_minus, d_fee, total_price, pt_plus, rec_name, rec_addr, rec_tel, msg, stus
+		FROM product_order
+		ORDER BY order_num DESC
+	</select>
+	
+</mapper>

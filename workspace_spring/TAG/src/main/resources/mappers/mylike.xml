@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mylike">
+
+	<select id="list" resultType="kr.co.itwill.mylike.MylikeDTO" parameterType="String">
+		SELECT lno, m_id, like_cd, like_li
+		FROM member_like
+		WHERE m_id=#{s_m_id}
+		ORDER BY like_cd DESC
+	</select>
+	
+	<select id="list_c" resultType="java.util.Map" parameterType="String">
+		select lno, m_id, like_cd, like_li, CC.edit
+		from member_like MM join concert CC
+		on MM.like_li=CC.c_no
+		where m_id=#{s_m_id} and like_cd='C'
+	</select>
+	
+	<select id="list_p" resultType="java.util.Map" parameterType="String">
+		select lno, m_id, like_cd, like_li, PP.edit
+		from member_like MM join product PP
+		on MM.like_li=PP.pro_no
+		where m_id=#{s_m_id} and like_cd='P'
+	</select>
+	
+</mapper>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--  concert  -->
+
+<mapper namespace="concert">
+
+
+<!-- [ 콘서트목록 - 최신순 ] -->	
+	<select id="concertListLatest" resultType="kr.co.itwill.concert.ConcertDTO" parameterType="java.util.Map">	
+		<![CDATA[
+			SELECT AA.*
+			FROM(
+				SELECT @RNO := @RNO + 1 as r, CC.*
+				FROM (
+						SELECT  c_no, title, date, start_time, end_time, open_eb, close_eb, open_tck, close_tck, genre, j_id, 						com_name, dlv_date, likecnt, postername, watch_age, price, edit
+						FROM concert
+						ORDER BY date DESC
+				) CC, (SELECT @RNO := 0) BB 
+			ORDER BY c_no DESC
+			) AA 
+			WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select> 
+	
+	
+<!-- [ 콘서트목록 - 개수 전체] -->
+	<select id="concertTotal" resultType="int">
+		SELECT COUNT(*)
+		FROM concert
+		ORDER BY c_no
+	</select> 	
+	
+	
+	
+<!-- 지난 콘서트 -->
+	<select id="pastConcertList" resultType="kr.co.itwill.concert.ConcertDTO" parameterType="java.util.Map">	
+		<![CDATA[
+		SELECT AA.*
+		FROM(
+			SELECT @RNO := @RNO + 1 as r, CC.*
+			FROM (
+				SELECT c_no, title, date, start_time, end_time, open_eb, close_eb, open_tck, close_tck, genre, j_id, 						
+					   com_name, dlv_date, likecnt, postername, watch_age, price, edit
+				FROM concert
+				WHERE date(`date`) <= date_format(CURDATE(), '%Y%m%d')
+				ORDER BY date DESC
+			) CC, (SELECT @RNO := 0) BB 
+		ORDER BY c_no DESC
+		) AA 
+		WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select> 
+
+
+<!-- 지난 콘서트 개수 -->
+	<select id="pastConcertTotal" resultType="int">
+		<![CDATA[
+		SELECT count(*)
+		FROM concert
+		WHERE date(`date`) <= date_format(CURDATE(), '%Y%m%d')
+		]]>
+	</select> 
+	
+	
+	
+<!-- 예정 콘서트 -->
+	<select id="yejungConcertList" resultType="kr.co.itwill.concert.ConcertDTO" parameterType="java.util.Map">	
+		<![CDATA[
+		SELECT AA.*
+		FROM(
+			SELECT @RNO := @RNO + 1 as r, CC.*
+			FROM (
+				SELECT c_no, title, date, start_time, end_time, open_eb, close_eb, open_tck, close_tck, genre, j_id, 						
+					   com_name, dlv_date, likecnt, postername, watch_age, price, edit
+				FROM concert
+				WHERE date(`date`) >= date_format(CURDATE(), '%Y%m%d')
+				ORDER BY date 
+			) CC, (SELECT @RNO := 0) BB 
+		ORDER BY c_no 
+		) AA 
+		WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select> 
+
+
+<!-- 예정 콘서트 개수 -->
+	<select id="yejungConcertTotal" resultType="int">
+		<![CDATA[
+		SELECT count(*)
+		FROM concert
+		WHERE date(`date`) >= date_format(CURDATE(), '%Y%m%d')
+		]]>
+	</select> 
+	
+	
+<!-- 콘서트 검색 -->
+	<select id="searchConcert" resultType="kr.co.itwill.concert.ConcertDTO" parameterType="String">
+		SELECT c_no, title, date, start_time, end_time, open_eb, close_eb, open_tck, close_tck, genre, j_id, 						
+			   com_name, dlv_date, likecnt, postername, watch_age, price, edit
+		FROM concert
+		WHERE upper(title) LIKE #{title}
+		ORDER BY title
+	</select> 
+	
+	
+	
+<!-- 콘서트 상세보기 detail -->
+	<select id="detailConcert" resultType="java.util.Map">
+		SELECT c_no, title, date, start_time, end_time, open_eb, close_eb, open_tck, close_tck, genre, j_id, com_name, dlv_date, likecnt, postername, watch_age, price, edit
+		FROM concert
+		WHERE c_no = #{c_no}
+	</select> 
+	
+	
+<!-- 오늘이 선예매 기간인지?  --> 
+<!-- <select id="earlybirdCheck" resultType="int" parameterType="java.util.Map">
+	<![CDATA[
+		SELECT COUNT(*)
+		FROM concert
+		WHERE c_no = #{c_no} && date(`open_eb`) <= date_format(CURDATE(), '%Y%m%d') && date_format(CURDATE(), '%Y%m%d') <= date(`close_eb`)	
+	]]>
+</select> -->
+
+
+<select id="earlybirdCheck" parameterType="String" resultType="int">
+	<![CDATA[
+		select COUNT(*) 
+		from concert
+		where now() >= open_eb and now() <= close_eb and c_no = #{c_no}
+	]]>
+</select>
+
+</mapper>

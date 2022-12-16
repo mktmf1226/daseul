@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="myticket">
+
+	<select id="list" resultType="java.util.Map" parameterType="int">
+		<![CDATA[
+		SELECT AA.*
+		FROM(
+			SELECT @RNO := @RNO + 1 as r, CC.*
+			FROM (
+				SELECT T.c_no, title, tck_num, m_id, cnt, order_price, dis_price, d_fee, total_price, rec_name, rec_addr, rec_tel, msg, stus, dis_descrip
+				FROM ticket_order T LEFT JOIN concert C
+									ON T.c_no = C.c_no
+									, (SELECT @RNO := 0) BB 
+				ORDER BY tck_num DESC
+			) CC
+		) AA 
+		WHERE r >= #{start} AND r <= #{end}
+		]]>
+	</select>
+	
+<!-- [ 티켓 주문서 목록 - 페이징 글개수 전체] -->
+	<select id="total" resultType="int">
+		SELECT COUNT(*) FROM ticket_order
+	</select> 
+	
+	
+	
+	<select id="detail" resultType="java.util.Map">
+		SELECT D.tck_num, title, m_id, cnt, order_price, dis_price, d_fee, total_price, rec_name, rec_addr, rec_tel, msg, stus, dis_descrip
+		FROM ticket_detail D LEFT JOIN ticket_order O
+							 ON D.tck_num = O.tck_num
+							 LEFT JOIN concert C
+							 ON O.c_no = C.c_no
+	</select>
+
+
+</mapper>

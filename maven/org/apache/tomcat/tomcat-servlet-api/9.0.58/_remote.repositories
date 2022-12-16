@@ -1,0 +1,5 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Wed Nov 30 11:02:02 KST 2022
+tomcat-servlet-api-9.0.58-sources.jar>central=
+tomcat-servlet-api-9.0.58.pom>central=
+tomcat-servlet-api-9.0.58.jar>central=

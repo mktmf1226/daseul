@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--  ticketOrder  -->
+
+<mapper namespace="ticketOrder">
+
+
+<!-- 티켓결제 티켓 주문서 insert -->
+<insert id="add" parameterType="kr.co.itwill.tickets.TicketOrderDTO">
+	INSERT INTO ticket_order(tck_num, m_id, c_no, cnt, order_price, dis_price, d_fee, total_price, rec_name, rec_addr, rec_tel, msg, stus, dis_descrip)
+	VALUES (
+			 #{tck_num}
+			 ,#{m_id}
+			 ,#{c_no}
+			 ,#{cnt}
+			 ,#{order_price}
+			 ,#{dis_price}
+			 ,#{d_fee}
+			 ,#{total_price}
+			 ,#{rec_name}
+			 ,#{rec_addr}
+			 ,#{rec_tel}
+			 ,#{msg}
+			 ,#{stus}
+			 ,#{dis_descrip}
+			)
+</insert>
+
+
+
+</mapper>
